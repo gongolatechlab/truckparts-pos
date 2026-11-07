@@ -332,6 +332,9 @@
     DB.requestPersistence().then(info => { state.persist = info; });   // (a tap is a good moment to ask)
     resetIdleTimer();
     showTab('sell');
+    if (!await DB.getMeta('demo_seeded')) {
+      try { await loadSample(true); await loadParts(); } catch (e) { console.error('Demo seed failed:', e); }
+    }
     Sync.refreshPending();
   }
 
@@ -1254,8 +1257,8 @@
   };
   const SAMPLE_POS = ['Front', 'Rear', 'Left', 'Right', 'Standard', 'Heavy-Duty'];
 
-  async function loadSample() {
-    if (!window.confirm('Add 3,000 made-up sample parts for testing? They stay on this phone only (not uploaded). You can erase them later from "Erase this phone\'s data".')) return;
+  async function loadSample(auto) {
+    if (!auto && !window.confirm('Add 3,000 made-up sample parts for testing? They stay on this phone only (not uploaded). You can erase them later from "Erase this phone\'s data".')) return;
     const btn = $('#btn-sample');
     btn.disabled = true;
     try {
@@ -1296,6 +1299,7 @@
       });
       await loadParts();
       toast('Added 3,000 sample parts', 'ok');
+      await DB.setMeta('demo_seeded', true);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Load 3,000 sample parts (testing)';
