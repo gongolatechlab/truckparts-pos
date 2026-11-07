@@ -144,7 +144,7 @@
     cart: [],                   // [{ partId, qty, price }]
     busy: false,
     lastSale: null,
-    settings: { shopName: 'Heavy Truck Parts', address: '', phone: '', autoLockMin: 5 },
+    settings: { shopName: 'De Sunny Daf', address: '', phone: '', autoLockMin: 5 },
     salesRange: 'today',
     dashRange: '7d',
     persist: null,
@@ -1073,7 +1073,7 @@
     $('#set-sb-key').value = cfg.key;
     updateSyncDetail();
     renderStorage();
-    $('#about-detail').textContent = 'Truck Parts POS v' + APP_VERSION + ' · Device ' + DB.getDeviceId();
+    $('#about-detail').textContent = 'De Sunny Daf POS v' + APP_VERSION + ' · Device ' + DB.getDeviceId();
   }
 
   function updateSyncDetail() {
@@ -1096,7 +1096,7 @@
 
   async function saveShop() {
     const s = state.settings;
-    s.shopName = $('#set-shop-name').value.trim() || 'Heavy Truck Parts';
+    s.shopName = $('#set-shop-name').value.trim() || 'De Sunny Daf';
     s.address = $('#set-shop-address').value.trim();
     s.phone = $('#set-shop-phone').value.trim();
     s.autoLockMin = parseInt($('#set-autolock').value, 10) || 0;

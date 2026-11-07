@@ -1,6 +1,6 @@
 {
-  "name": "Heavy Truck Parts POS",
-  "short_name": "Truck POS",
+  "name": "De Sunny Daf POS",
+  "short_name": "De Sunny Daf",
   "description": "Point of sale and inventory for a heavy truck spare parts shop",
   "start_url": "./index.html",
   "scope": "./",
