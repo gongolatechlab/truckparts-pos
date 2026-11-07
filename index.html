@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<!--
+  Heavy Truck Parts POS — single-page app shell.
+  Every screen lives in this one file; js/app.js shows/hides them.
+  Elements marked data-owner-only are physically REMOVED from the page when a
+  Staff PIN is used, and put back for the Owner PIN.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Truck Parts POS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f2933">
+  <meta name="color-scheme" content="light dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Supabase client from a CDN. `async` so a missing signal never blocks the app from opening. -->
+  <script async id="supabase-cdn" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body data-role="none">
+
+<!-- ======================================================================
+     PIN LOCK SCREEN
+     ====================================================================== -->
+<section id="lock-screen" class="lock" aria-label="Enter PIN">
+  <div class="lock-logo" aria-hidden="true">
+    <svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">
+      <circle cx="32" cy="32" r="22"/><circle cx="32" cy="32" r="5" fill="currentColor"/>
+      <path d="M32 10v12M32 42v12M10 32h12M42 32h12"/>
+    </svg>
+  </div>
+  <h1>Truck Parts POS</h1>
+  <div class="sub" id="lock-shop">Mack · Volvo · Scania · DAF</div>
+  <div class="pin-dots" id="pin-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="lock-msg" id="lock-msg" role="status" aria-live="polite">Enter your PIN</div>
+  <div class="keypad" id="keypad">
+    <button type="button" data-key="1">1</button>
+    <button type="button" data-key="2">2</button>
+    <button type="button" data-key="3">3</button>
+    <button type="button" data-key="4">4</button>
+    <button type="button" data-key="5">5</button>
+    <button type="button" data-key="6">6</button>
+    <button type="button" data-key="7">7</button>
+    <button type="button" data-key="8">8</button>
+    <button type="button" data-key="9">9</button>
+    <button type="button" data-key="clear" class="aux" aria-label="Clear">C</button>
+    <button type="button" data-key="0">0</button>
+    <button type="button" data-key="back" class="aux" aria-label="Backspace">⌫</button>
+  </div>
+</section>
+
+<!-- ======================================================================
+     APP (hidden until a valid PIN is entered)
+     ====================================================================== -->
+<div id="app" hidden>
+
+  <header class="topbar">
+    <div class="top-left">
+      <div class="shop-name" id="shop-name">Heavy Truck Parts</div>
+      <span id="role-badge" class="role-badge">STAFF</span>
+    </div>
+    <div class="top-actions">
+      <button id="sync-chip" class="chip sync local" type="button" aria-label="Sync status">
+        <span class="dot"></span><span id="sync-text">Local</span>
+      </button>
+      <button id="btn-lock" class="icon-btn light" type="button" aria-label="Lock the app">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ===================== SELL (POS) ===================== -->
+    <section id="view-sell" class="view active" aria-label="Sell">
+      <div class="searchbar">
+        <input id="sell-search" type="search" inputmode="search" enterkeyhint="search"
+               placeholder="Search name, SKU or part number…"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="chips" id="sell-brands">
+        <button type="button" class="chip-btn active" data-action="brand" data-key="sell" data-brand="All">All</button>
+        <button type="button" class="chip-btn" data-action="brand" data-key="sell" data-brand="Mack">Mack</button>
+        <button type="button" class="chip-btn" data-action="brand" data-key="sell" data-brand="Volvo">Volvo</button>
+        <button type="button" class="chip-btn" data-action="brand" data-key="sell" data-brand="Scania">Scania</button>
+        <button type="button" class="chip-btn" data-action="brand" data-key="sell" data-brand="DAF">DAF</button>
+      </div>
+      <div class="result-info" id="sell-info"></div>
+      <div class="list" id="sell-results"></div>
+    </section>
+
+    <!-- ===================== STOCK ===================== -->
+    <section id="view-stock" class="view" aria-label="Stock">
+      <div class="searchbar">
+        <input id="stock-search" type="search" inputmode="search" enterkeyhint="search"
+               placeholder="Search stock…"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="chips" id="stock-brands">
+        <button type="button" class="chip-btn active" data-action="brand" data-key="stock" data-brand="All">All</button>
+        <button type="button" class="chip-btn" data-action="brand" data-key="stock" data-brand="Mack">Mack</button>
+        <button type="button" class="chip-btn" data-action="brand" data-key="stock" data-brand="Volvo">Volvo</button>
+        <button type="button" class="chip-btn" data-action="brand" data-key="stock" data-brand="Scania">Scania</button>
+        <button type="button" class="chip-btn" data-action="brand" data-key="stock" data-brand="DAF">DAF</button>
+        <button type="button" class="chip-btn warn" id="stock-low" data-action="low-toggle">Low stock</button>
+      </div>
+      <div class="result-info" id="stock-info"></div>
+      <div class="list" id="stock-results"></div>
+      <button type="button" id="fab-add" class="fab" data-action="part-new" data-owner-only>＋ New part</button>
+    </section>
+
+    <!-- ===================== SALES ===================== -->
+    <section id="view-sales" class="view" aria-label="Sales">
+      <div class="chips" id="sales-range">
+        <button type="button" class="chip-btn active" data-action="sales-range" data-range="today">Today</button>
+        <button type="button" class="chip-btn" data-action="sales-range" data-range="7d" data-owner-only>7 days</button>
+        <button type="button" class="chip-btn" data-action="sales-range" data-range="30d" data-owner-only>30 days</button>
+      </div>
+      <div class="summary" id="sales-summary"></div>
+      <div class="list" id="sales-list"></div>
+    </section>
+
+    <!-- ===================== DASHBOARD (owner only) ===================== -->
+    <section id="view-dashboard" class="view" aria-label="Dashboard" data-owner-only>
+      <div class="chips" id="dash-range">
+        <button type="button" class="chip-btn" data-action="dash-range" data-range="today">Today</button>
+        <button type="button" class="chip-btn active" data-action="dash-range" data-range="7d">7 days</button>
+        <button type="button" class="chip-btn" data-action="dash-range" data-range="30d">30 days</button>
+      </div>
+      <div id="dash-body"></div>
+    </section>
+
+    <!-- ===================== SETTINGS (owner only) ===================== -->
+    <section id="view-settings" class="view" aria-label="Settings" data-owner-only>
+
+      <div class="card">
+        <h3>Shop details <small>(printed on receipts)</small></h3>
+        <div class="field"><label for="set-shop-name">Shop name</label><input id="set-shop-name" type="text" maxlength="60"></div>
+        <div class="field"><label for="set-shop-address">Address</label><input id="set-shop-address" type="text" maxlength="120"></div>
+        <div class="row2">
+          <div class="field"><label for="set-shop-phone">Phone</label><input id="set-shop-phone" type="tel" maxlength="30"></div>
+          <div class="field"><label for="set-autolock">Auto-lock after</label>
+            <select id="set-autolock">
+              <option value="0">Never</option><option value="1">1 minute</option><option value="2">2 minutes</option>
+              <option value="5">5 minutes</option><option value="10">10 minutes</option><option value="30">30 minutes</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" class="btn block" data-action="save-shop">Save shop details</button>
+      </div>
+
+      <div class="card">
+        <h3>PIN codes</h3>
+        <p class="hint">Default PINs are Staff <b>0000</b> and Owner <b>1234</b>. Change them before real use.</p>
+        <div class="field"><label for="set-cur-owner">Current Owner PIN</label><input id="set-cur-owner" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+        <div class="row2">
+          <div class="field"><label for="set-new-staff">New Staff PIN</label><input id="set-new-staff" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 digits"></div>
+          <div class="field"><label for="set-new-owner">New Owner PIN</label><input id="set-new-owner" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 digits"></div>
+        </div>
+        <button type="button" class="btn block" data-action="save-pins">Change PINs</button>
+      </div>
+
+      <div class="card">
+        <h3>Cloud sync <small>(Supabase)</small></h3>
+        <p class="hint">Run <code>supabase-schema.sql</code> once in your Supabase project, then paste the project URL and the public <b>anon</b> key.</p>
+        <div class="field"><label for="set-sb-url">Project URL</label><input id="set-sb-url" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label for="set-sb-key">Anon key</label><input id="set-sb-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div class="sync-detail" id="sync-detail" role="status"></div>
+        <div class="btn-row">
+          <button type="button" class="btn" data-action="save-sync">Save &amp; test</button>
+          <button type="button" class="btn ghost" data-action="sync-now">Sync now</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Data tools</h3>
+        <p class="hint">Import a CSV with columns such as <code>sku, part number, name, brand, category, location, cost, price, qty, reorder</code>.</p>
+        <input id="csv-file" type="file" accept=".csv,text/csv" hidden>
+        <div class="btn-col">
+          <button type="button" class="btn" id="btn-import" data-action="import-csv">Import parts from CSV</button>
+          <button type="button" class="btn ghost" data-action="export-stock">Export stock (CSV)</button>
+          <button type="button" class="btn ghost" data-action="export-sales">Export sales (CSV)</button>
+          <button type="button" class="btn ghost" id="btn-sample" data-action="load-sample">Load 3,000 sample parts (testing)</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Phone storage</h3>
+        <div class="sync-detail" id="storage-detail"></div>
+        <button type="button" class="btn ghost block" data-action="persist-storage">Protect data from auto-clean</button>
+      </div>
+
+      <div class="card danger-zone">
+        <h3>Erase this phone's data</h3>
+        <p class="hint">Deletes all parts, stock history, sales and settings stored on <b>this phone</b> (PINs go back to the defaults). Data already uploaded to Supabase is not touched. Type <b>DELETE</b> to confirm.</p>
+        <div class="field"><input id="wipe-confirm" type="text" placeholder="DELETE" autocomplete="off" autocapitalize="characters"></div>
+        <button type="button" class="btn danger block" data-action="wipe">Erase everything on this phone</button>
+      </div>
+
+      <div class="about" id="about-detail"></div>
+    </section>
+
+  </main>
+
+  <!-- Floating cart bar (Sell screen) -->
+  <button type="button" id="cart-bar" class="cart-bar" data-action="cart-open" hidden>
+    <span class="cb-count" id="cart-count">0</span>
+    <span class="cb-label">View cart</span>
+    <span class="cb-total" id="cart-total">₦0</span>
+  </button>
+
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Main">
+    <button type="button" data-tab="sell" class="active">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>
+      <span>Sell</span>
+    </button>
+    <button type="button" data-tab="stock">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>
+      <span>Stock</span>
+    </button>
+    <button type="button" data-tab="sales">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>
+      <span>Sales</span>
+    </button>
+    <button type="button" data-tab="dashboard" data-owner-only>
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button type="button" data-tab="settings" data-owner-only>
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <!-- Bottom sheet used for cart, part details, forms and receipts -->
+  <div id="sheet-backdrop" class="backdrop" hidden></div>
+  <div id="sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="sheet-title"></h2>
+      <button type="button" id="sheet-close" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <div id="sheet-body" class="sheet-body"></div>
+    <div id="sheet-foot" class="sheet-foot" hidden></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<!-- Receipt content copied here for window.print() -->
+<div id="print-area" class="print-area" aria-hidden="true"></div>
+
+<!-- Load order matters: storage → sync → interface -->
+<script src="js/db.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "Heavy Truck Parts POS",
+  "short_name": "Truck POS",
+  "description": "Point of sale and inventory for a heavy truck spare parts shop",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1f2933",
+  "theme_color": "#1f2933",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
